@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Words Table</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: #333;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        select,
+        input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #ff7e5f;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            font-size: 16px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        #addButton {
+            background-color: #ff7e5f;
+        }
+
+        #updateButton {
+            background-color: #feb47b;
+        }
+
+        .filter-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .filter-selector label {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .date-header {
+            font-size: 20px;
+            margin: 20px 0;
+            font-weight: bold;
+            color: #333;
+            background: #feb47b;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #ff7e5f;
+            color: #fff;
+        }
+
+        td {
+            background-color: #f9f9f9;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #fff;
+            transition: background-color 0.3s ease;
+        }
+
+        .edit-btn {
+            background-color: #feb47b;
+        }
+
+        .edit-btn:hover {
+            background-color: #ff7e5f;
+        }
+
+        .delete-btn {
+            background-color: #ff7e5f;
+        }
+
+        .delete-btn:hover {
+            background-color: #d45d5d;
+        }
+
+        .number-col {
+            text-align: center;
+        }
+
+        .article-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #feb47b;
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .article-button:hover {
+            background-color: #ff7e5f;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>English Words Table</h1>
+    <div class="container">
+        <div class="form-group">
+            <select id="category">
+                <option value="">Select Category</option>
+                <option value="verbs">Verbs</option>
+                <option value="adverbs">Adverbs</option>
+                <option value="adjectives">Adjectives</option>
+                <option value="nouns">Nouns</option>
+            </select>
+            <input type="text" id="word" placeholder="Word">
+            <input type="text" id="meaning" placeholder="Meaning">
+            <input type="text" id="ipa" placeholder="IPA">
+            <input type="text" id="description" placeholder="Description">
+            <button id="addButton" onclick="addWord()">Add Word</button>
+            <button id="updateButton" onclick="updateWord()" style="display:none;">Update Word</button>
+        </div>
+
+        <div class="filter-selector">
+            <label for="date">Select Date:</label>
+            <select id="date" onchange="filterWords()"></select>
+
+            <label for="filterCategory">Select Category:</label>
+            <select id="filterCategory" onchange="filterWords()">
+                <option value="">All Categories</option>
+                <option value="verbs">Verbs</option>
+                <option value="adverbs">Adverbs</option>
+                <option value="adjectives">Adjectives</option>
+                <option value="nouns">Nouns</option>
+            </select>
+        </div>
+
+        <div id="wordTables"></div>
+
+        <a href="article.html" class="article-button">Go to Article</a>
+    </div>
+
+    <script>
+        // Existing JavaScript code...
+
+        const data = JSON.parse(localStorage.getItem('wordData')) || {
+            verbs: [],
+            adverbs: [],
+            adjectives: [],
+            nouns: []
+        };
+
+        let editingCategory = '';
+        let editingIndex = -1;
+
+        const saveData = () => {
+            localStorage.setItem('wordData', JSON.stringify(data));
+        };
+
+        const createTable = (category, words, date) => {
+            const tableContainer = document.createElement('div');
+            tableContainer.classList.add('table-container');
+
+            const dateHeader = document.createElement('div');
+            dateHeader.classList.add('date-header');
+            dateHeader.textContent = `Category: ${category} | Date: ${date}`;
+            tableContainer.appendChild(dateHeader);
+
+            const table = document.createElement('table');
+            table.id = category.toLowerCase();
+            const header = table.insertRow();
+            header.innerHTML = `<th>No</th><th>${category}</th><th>Meaning</th><th>IPA</th><th>Description</th><th>Action</th>`;
+
+            words.forEach((item, index) => {
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td class="number-col">${index + 1}</td>
+                    <td>${item.word}</td>
+                    <td>${item.meaning}</td>
+                    <td>${item.ipa}</td>
+                    <td>${item.description || ''}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editWord('${category.toLowerCase()}', ${index})">Edit</button>
+                        <button class="delete-btn" onclick="deleteWord('${category.toLowerCase()}', ${index})">Delete</button>
+                    </td>
+                `;
+            });
+
+            tableContainer.appendChild(table);
+            return tableContainer;
+        };
+
+        const renderTables = (selectedDate, selectedCategory) => {
+            const wordTables = document.getElementById('wordTables');
+            wordTables.innerHTML = '';
+
+            Object.keys(data).forEach(category => {
+                if (selectedCategory && selectedCategory !== category) return;
+
+                const filteredWords = data[category].filter(word => word.date === selectedDate);
+                if (filteredWords.length > 0) {
+                    const tableContainer = createTable(category.charAt(0).toUpperCase() + category.slice(1), filteredWords, selectedDate);
+                    wordTables.appendChild(tableContainer);
+                }
+            });
+        };
+
+        const addWord = () => {
+            const category = document.getElementById('category').value.toLowerCase();
+            const word = document.getElementById('word').value;
+            const meaning = document.getElementById('meaning').value;
+            const ipa = document.getElementById('ipa').value;
+            const description = document.getElementById('description').value;
+
+            if (word && meaning && ipa) {
+                const today = new Date().toISOString().split('T')[0];
+                data[category] = data[category] || [];
+                data[category].push({ word, meaning, ipa, description, date: today });
+                saveData();
+                updateDateSelector();
+                filterWords();
+
+                document.getElementById('word').value = '';
+                document.getElementById('meaning').value = '';
+                document.getElementById('ipa').value = '';
+                document.getElementById('description').value = '';
+            }
+        };
+
+        const updateWord = () => {
+            const category = editingCategory;
+            const word = document.getElementById('word').value;
+            const meaning = document.getElementById('meaning').value;
+            const ipa = document.getElementById('ipa').value;
+            const description = document.getElementById('description').value;
+
+            if (word && meaning && ipa) {
+                data[category][editingIndex] = { word, meaning, ipa, description };
+                saveData();
+                updateDateSelector();
+                filterWords();
+
+                document.getElementById('word').value = '';
+                document.getElementById('meaning').value = '';
+                document.getElementById('ipa').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('updateButton').style.display = 'none';
+                document.getElementById('addButton').style.display = 'block';
+            }
+        };
+
+        const editWord = (category, index) => {
+            editingCategory = category;
+            editingIndex = index;
+            const word = data[category][index];
+            document.getElementById('category').value = category.charAt(0).toUpperCase() + category.slice(1);
+            document.getElementById('word').value = word.word;
+            document.getElementById('meaning').value = word.meaning;
+            document.getElementById('ipa').value = word.ipa;
+            document.getElementById('description').value = word.description || '';
+            document.getElementById('updateButton').style.display = 'block';
+            document.getElementById('addButton').style.display = 'none';
+        };
+
+        const deleteWord = (category, index) => {
+            data[category].splice(index, 1);
+            saveData();
+            updateDateSelector();
+            filterWords();
+        };
+
+        const updateDateSelector = () => {
+            const dates = new Set();
+            Object.values(data).flat().forEach(item => dates.add(item.date));
+            const dateSelector = document.getElementById('date');
+            dateSelector.innerHTML = '<option value="">Select Date</option>';
+            dates.forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = date;
+                dateSelector.appendChild(option);
+            });
+        };
+
+        const filterWords = () => {
+            const selectedDate = document.getElementById('date').value;
+            const selectedCategory = document.getElementById('filterCategory').value.toLowerCase();
+            renderTables(selectedDate, selectedCategory);
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDateSelector();
+            filterWords();
+        });
+    </script>
+</body>
+
+</html>

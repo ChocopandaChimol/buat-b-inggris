@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Management - Quill Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: #333;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group select,
+        .form-group input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #ff7e5f;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            height: 200px;
+            border-radius: 5px;
+            border: 2px solid #ff7e5f;
+            font-size: 16px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .form-group button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            font-size: 16px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-right: 10px;
+        }
+
+        .form-group button:hover {
+            transform: scale(1.05);
+        }
+
+        #addButton {
+            background-color: #ff7e5f;
+        }
+
+        #updateButton {
+            background-color: #feb47b;
+        }
+
+        .filter-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .filter-selector label {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .date-header {
+            font-size: 20px;
+            margin: 20px 0;
+            font-weight: bold;
+            color: #333;
+            background: #feb47b;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .article-container {
+            margin: 20px 0;
+        }
+
+        .article {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .article h2 {
+            margin: 0 0 10px;
+            font-size: 1.5rem;
+        }
+
+        .article p {
+            margin: 0 0 10px;
+        }
+
+        .article .author {
+            font-style: italic;
+            color: #666;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #fff;
+            transition: background-color 0.3s ease;
+        }
+
+        .edit-btn {
+            background-color: #feb47b;
+        }
+
+        .edit-btn:hover {
+            background-color: #ff7e5f;
+        }
+
+        .delete-btn {
+            background-color: #ff7e5f;
+        }
+
+        .delete-btn:hover {
+            background-color: #d45d5d;
+        }
+
+        .quill-container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .ql-editor img {
+            max-width: 100%;
+        }
+
+        .navigation-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 20px;
+        }
+
+        .navigation-button:hover {
+            background-color: #555;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Article Management - Quill Editor</h1>
+    <div class="container">
+        <div class="form-group">
+            <select id="category">
+                <option value="">Select Category</option>
+                <option value="positive">Positive Sentences</option>
+                <option value="negative">Negative Sentences</option>
+                <option value="questions">Questions</option>
+                <option value="uses">Uses</option>
+            </select>
+            <input type="text" id="title" placeholder="Title">
+            <div class="quill-container">
+                <div id="editor" style="height: 200px;"></div>
+            </div>
+            <input type="text" id="author" placeholder="Author">
+            <input type="file" id="imageUpload" style="display:none;">
+            <button id="addButton" onclick="addArticle()">Add Article</button>
+            <button id="updateButton" onclick="updateArticle()" style="display:none;">Update Article</button>
+        </div>
+
+        <div class="filter-selector">
+            <label for="date">Select Date:</label>
+            <select id="date" onchange="filterArticles()"></select>
+        </div>
+
+        <div id="articleContainers"></div>
+
+        <a href="index.html" class="navigation-button">Go to Index Page</a>
+    </div>
+
+    <!-- Quill Editor JS -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.min.js"></script>
+    <script>
+        // Initialize Quill editor
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    ['link', 'image'],
+                    ['clean'] // remove formatting button
+                ]
+            }
+        });
+
+        const data = JSON.parse(localStorage.getItem('articleData')) || {
+            positive: [],
+            negative: [],
+            questions: [],
+            uses: []
+        };
+
+        let editingCategory = '';
+        let editingIndex = -1;
+
+        const saveData = () => {
+            localStorage.setItem('articleData', JSON.stringify(data));
+        };
+
+        const createArticleElement = (article, index, category) => {
+            const articleElement = document.createElement('div');
+            articleElement.classList.add('article');
+            articleElement.innerHTML = `
+                <h2>${article.title}</h2>
+                <div>${article.content}</div>
+                ${article.image ? `<img src="${article.image}" alt="Article Image" style="max-width: 100%;"/>` : ''}
+                <p class="author">Author: ${article.author}</p>
+                <button class="edit-btn" onclick="editArticle('${category}', ${index})">Edit</button>
+                <button class="delete-btn" onclick="deleteArticle('${category}', ${index})">Delete</button>
+            `;
+            return articleElement;
+        };
+
+        const renderArticles = (selectedDate) => {
+            const articleContainers = document.getElementById('articleContainers');
+            articleContainers.innerHTML = '';
+
+            Object.keys(data).forEach(category => {
+                const filteredArticles = data[category].filter(article => article.date === selectedDate);
+                if (filteredArticles.length > 0) {
+                    const dateHeader = document.createElement('div');
+                    dateHeader.classList.add('date-header');
+                    dateHeader.textContent = `Articles for ${category.charAt(0).toUpperCase() + category.slice(1)} on ${selectedDate}`;
+                    articleContainers.appendChild(dateHeader);
+                }
+
+                filteredArticles.forEach((article, index) => {
+                    const articleElement = createArticleElement(article, index, category);
+                    articleContainers.appendChild(articleElement);
+                });
+            });
+        };
+
+        const populateDates = () => {
+            const dateSelect = document.getElementById('date');
+            const allDates = [...new Set(Object.values(data).flat().map(article => article.date))];
+            dateSelect.innerHTML = allDates.map(date => `<option value="${date}">${date}</option>`).join('');
+            dateSelect.value = allDates[0] || '';
+            renderArticles(allDates[0] || '');
+        };
+
+        const addArticle = () => {
+            const title = document.getElementById('title').value;
+            const content = quill.root.innerHTML;
+            const author = document.getElementById('author').value;
+            const category = document.getElementById('category').value;
+            const image = document.getElementById('imageUpload').files[0];
+            const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+            if (title && content && category) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const imageDataUrl = event.target.result;
+                    data[category].push({ title, content, author, date, image: imageDataUrl });
+                    saveData();
+                    populateDates();
+                    clearForm();
+                };
+                if (image) {
+                    reader.readAsDataURL(image);
+                } else {
+                    data[category].push({ title, content, author, date });
+                    saveData();
+                    populateDates();
+                    clearForm();
+                }
+            } else {
+                alert('Please fill out all fields');
+            }
+        };
+
+        const editArticle = (category, index) => {
+            editingCategory = category;
+            editingIndex = index;
+            const article = data[category][index];
+            document.getElementById('title').value = article.title;
+            quill.root.innerHTML = article.content;
+            document.getElementById('author').value = article.author;
+            document.getElementById('updateButton').style.display = 'inline-block';
+            document.getElementById('addButton').style.display = 'none';
+        };
+
+        const updateArticle = () => {
+            const title = document.getElementById('title').value;
+            const content = quill.root.innerHTML;
+            const author = document.getElementById('author').value;
+            const category = editingCategory;
+            const index = editingIndex;
+            const image = document.getElementById('imageUpload').files[0];
+            const date = new Date().toISOString().split('T')[0];
+
+            if (title && content && category) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const imageDataUrl = event.target.result;
+                    data[category][index] = { title, content, author, date, image: imageDataUrl };
+                    saveData();
+                    populateDates();
+                    clearForm();
+                };
+                if (image) {
+                    reader.readAsDataURL(image);
+                } else {
+                    data[category][index] = { title, content, author, date };
+                    saveData();
+                    populateDates();
+                    clearForm();
+                }
+            } else {
+                alert('Please fill out all fields');
+            }
+        };
+
+        const deleteArticle = (category, index) => {
+            if (confirm('Are you sure you want to delete this article?')) {
+                data[category].splice(index, 1);
+                saveData();
+                populateDates();
+            }
+        };
+
+        const clearForm = () => {
+            document.getElementById('title').value = '';
+            quill.root.innerHTML = '';
+            document.getElementById('author').value = '';
+            document.getElementById('imageUpload').value = '';
+            document.getElementById('addButton').style.display = 'inline-block';
+            document.getElementById('updateButton').style.display = 'none';
+        };
+
+        const filterArticles = () => {
+            const selectedDate = document.getElementById('date').value;
+            renderArticles(selectedDate);
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateDates();
+        });
+    </script>
+</body>
+
+</html>
